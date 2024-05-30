@@ -15,6 +15,33 @@ You should have received a copy of the GNU General Public License along with web
 If not, see <https://www.gnu.org/licenses/>.
 */
 
+use clap::Parser;
+use warp::Filter;
+use std::fs;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// File path of webfinger JSON file
+    #[arg(short, long)]
+    file_path: String,
+}
+
 fn main() {
-    println!("Hello, world!");
+    let args = Args::parse();
+
+    let webfinger_jrd = fs::read_to_string(args.file_path)
+        .expect("Failed to read file");
+
+    let rt = tokio::runtime::Runtime::new().unwrap();
+
+    rt.block_on(async {
+        // GET /hello/warp => 200 OK with body "Hello, warp!"
+        let hello = warp::path!("hello" / String)
+            .map(|name| format!("Hello, {} with {}!", name, webfinger_jrd));
+
+        warp::serve(hello)
+            .run(([127, 0, 0, 1], 3030))
+            .await;
+    });
 }
