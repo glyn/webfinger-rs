@@ -23,8 +23,20 @@ use axum::{
 use std::io;
 use tokio::net::TcpListener;
 
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// File path of webfinger JSON file
+    #[arg(short, long)]
+    file_path: String,
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
+    let args = Args::parse();
+    
     let router = Router::new()
         .route("/", get("Hello world!"));
 
