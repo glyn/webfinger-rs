@@ -15,6 +15,21 @@ You should have received a copy of the GNU General Public License along with web
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-fn main() {
-    println!("Hello, world!");
+use axum::{
+    http::StatusCode,
+    response::{Html, IntoResponse, Response},
+    routing::{get, Router},
+};
+use std::io;
+use tokio::net::TcpListener;
+
+#[tokio::main]
+async fn main() -> io::Result<()> {
+    let router = Router::new()
+        .route("/", get("Hello world!"));
+
+    let listener = TcpListener::bind("127.0.0.1:8080").await?;
+    println!("Listening on http://{}", listener.local_addr()?);
+
+    axum::serve(listener, router).await
 }
