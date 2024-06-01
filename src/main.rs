@@ -16,11 +16,14 @@ If not, see <https://www.gnu.org/licenses/>.
 */
 
 use axum::{
+    Router,
+    extract::State,
     http::StatusCode,
     response::{Html, IntoResponse, Response},
-    routing::{get, Router},
+    routing::{get},
 };
 use std::io;
+use std::fs;
 use tokio::net::TcpListener;
 
 use clap::Parser;
@@ -33,15 +36,43 @@ struct Args {
     file_path: String,
 }
 
+// the application state
+//
+// here you can put configuration, database connection pools, or whatever
+// state you need
+//
+// see "When states need to implement `Clone`" for more details on why we need
+// `#[derive(Clone)]` here.
+#[derive(Clone)]
+struct AppState {
+    webfinger_jrd : String,
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let args = Args::parse();
-    
+
+    let webfinger_jrd = fs::read_to_string(args.file_path)
+    .expect("Failed to read file");
+
+    let state = AppState { webfinger_jrd : webfinger_jrd};
+
     let router = Router::new()
-        .route("/", get("Hello world!"));
+        .route("/", get(handler))
+        .with_state(state);
 
     let listener = TcpListener::bind("127.0.0.1:8080").await?;
     println!("Listening on http://{}", listener.local_addr()?);
 
     axum::serve(listener, router).await
+}
+
+async fn handler(
+    // access the state via the `State` extractor
+    // extracting a state of the wrong type results in a compile error
+    State(state): State<AppState>,
+) -> String {
+    // use `state`...
+
+    state.webfinger_jrd.to_string()
 }
