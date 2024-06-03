@@ -31,9 +31,13 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// File path of webfinger JSON file
+    /// File path of webfinger JRD map file
     #[arg(short, long)]
-    file_path: String,
+    jrd_map_path: String,
+
+    /// File path of webfinger JRD map file
+    #[arg(short, long)]
+    port: u16,
 }
 
 // the application state
@@ -52,7 +56,7 @@ struct AppState {
 async fn main() -> io::Result<()> {
     let args = Args::parse();
 
-    let webfinger_jrd = fs::read_to_string(args.file_path)
+    let webfinger_jrd = fs::read_to_string(args.jrd_map_path)
     .expect("Failed to read file");
 
     let state = AppState { webfinger_jrd : webfinger_jrd};
@@ -61,7 +65,7 @@ async fn main() -> io::Result<()> {
         .route("/", get(handler))
         .with_state(state);
 
-    let listener = TcpListener::bind("127.0.0.1:8080").await?;
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", args.port)).await?;
     println!("Listening on http://{}", listener.local_addr()?);
 
     axum::serve(listener, router).await
