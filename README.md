@@ -1,3 +1,7 @@
+<div style="text-align: center;">
+    <img width=130 src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/WebFinger_Logo.svg/440px-WebFinger_Logo.svg.png">
+</div>
+
 # webfinger-rs
 
 `webfinger-rs` is a simple [WebFinger](https://www.rfc-editor.org/rfc/rfc7033.html) server for personal websites, written in Rust.
