@@ -8,19 +8,17 @@ See the following instructions for how to build and use the server.
 
 ## Building
 
-This module is written in Rust. After [installing Rust](https://www.rust-lang.org/tools/install),
-the module may be built using `cargo`.
-
-For example, issue the following command in the root directory of a clone of this repository:
+This server is written in Rust. After [installing Rust](https://www.rust-lang.org/tools/install),
+build the server by issuing the `cargo` command in the root directory of a clone of this repository:
 ~~~
 cargo build --release
 ~~~
 
-This will build a shared library in `target/release`.
+This will build the `webfinger-rs` server executable in `target/release`.
 
-## Using
+## Usage
 
-The `webfinger-rs` server is started by executing the following command:
+Start the `webfinger-rs` server by executing the following command:
 ~~~
 webfinger-rs --port <portnum> --jrd-map-path /path/to/jrdmap.json
 ~~~
