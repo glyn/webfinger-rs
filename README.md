@@ -1,6 +1,10 @@
 # webfinger-rs
 
-See the following instructions for how to build and use the module.
+`webfinger-rs` is a simple [WebFinger](https://www.rfc-editor.org/rfc/rfc7033.html) server for personal websites, written in Rust.
+
+The server can support multiple URIs, but the intention is there is a small, relatively static number of such URIs. The server is not intended for sites with many users since the mappings from URIs to JSON Resource Descriptor are stored in a single file.
+
+See the following instructions for how to build and use the server.
 
 ## Building
 
@@ -18,10 +22,10 @@ This will build a shared library in `target/release`.
 
 The `webfinger-rs` server is started by executing the following command:
 ~~~
-webfinger-rs --jrd-map-path /path/to/jrdmap.json
+webfinger-rs --port <portnum> --jrd-map-path /path/to/jrdmap.json
 ~~~
 
-where the file whose path is specified using `--jrd-map-path` is a JSON file containing a JSON map from string URI to the [JSON Resource Descriptor](https://www.rfc-editor.org/rfc/rfc7033.html#page-11) (JRD) associated with the URI.
+where `<portnum>` is the port the server should listen on and `--jrd-map-path` is the file path of a JSON file containing a map from string URI to the [JSON Resource Descriptor](https://www.rfc-editor.org/rfc/rfc7033.html#page-11) (JRD) associated with the URI.
 
 For example:
 ~~~
@@ -53,6 +57,8 @@ For example:
   }
 }
 ~~~
+
+In the example, each URI in the top-level map is an account equal to the subject, but the two values are not necessarily equal. 
 
 ## Contributing
 
