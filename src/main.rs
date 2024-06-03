@@ -35,20 +35,13 @@ struct Args {
     #[arg(short, long)]
     jrd_map_path: String,
 
-    /// File path of webfinger JRD map file
+    /// Port number to listen on
     #[arg(short, long)]
     port: u16,
 }
 
-// the application state
-//
-// here you can put configuration, database connection pools, or whatever
-// state you need
-//
-// see "When states need to implement `Clone`" for more details on why we need
-// `#[derive(Clone)]` here.
 #[derive(Clone)]
-struct AppState {
+struct ServerState {
     webfinger_jrd : String,
 }
 
@@ -59,7 +52,7 @@ async fn main() -> io::Result<()> {
     let webfinger_jrd = fs::read_to_string(args.jrd_map_path)
     .expect("Failed to read file");
 
-    let state = AppState { webfinger_jrd : webfinger_jrd};
+    let state = ServerState { webfinger_jrd : webfinger_jrd};
 
     let router = Router::new()
         .route("/", get(handler))
@@ -72,9 +65,7 @@ async fn main() -> io::Result<()> {
 }
 
 async fn handler(
-    // access the state via the `State` extractor
-    // extracting a state of the wrong type results in a compile error
-    State(state): State<AppState>,
+    State(state): State<ServerState>,
 ) -> String {
     // use `state`...
 
