@@ -56,7 +56,7 @@ For example:
 }
 ~~~
 
-In the example, each URI in the top-level map is an account equal to the subject, but the two values are not necessarily equal. 
+In the example, each URI in the top-level map is an account equal to the subject, but the URIs need not be accounts and need not be equal to the subject. See the WebFinger [RFC 7033](https://www.rfc-editor.org/rfc/rfc7033.html) for more information about URIs and subjects and [RFC 7565](https://www.rfc-editor.org/rfc/rfc7565.html) for details of the 'acct' URI scheme.
 
 ## Contributing
 
