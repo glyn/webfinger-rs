@@ -4,11 +4,25 @@
 
 # webfinger-rs
 
-`webfinger-rs` is a simple [WebFinger](https://www.rfc-editor.org/rfc/rfc7033.html) server for personal websites, written in Rust.
+`webfinger-rs` is a simple [WebFinger](https://www.rfc-editor.org/rfc/rfc7033.html) server, written in Rust.
 
-The server can support multiple URIs, but the intention is there is a small, relatively static number of such URIs. The server is not intended for sites with many users since the mappings from URIs to JSON Resource Descriptor are stored in a single file.
+The server can support multiple WebFinger resources, but is intended for use with a small, relatively static number of such resources, for example on a personal website. The server is not intended for sites with many users, since the mappings from WebFinger resources to JSON Resource Descriptor (JRD) are stored in a single file.
 
-See the following instructions for how to build and use the server.
+WebFinger must be over HTTPS, but this server currently supports only HTTP, so this server must sit behind a HTTPS server. For example, this server could be used in conjunction with a reverse proxy, such as NGINX or freenginx, that terminates HTTPS traffic from clients and then passes requests to this server.
+
+## Requests and responses
+
+Requests must contain the path component `/.well-known/webfinger`. Any other path component will result in HTTP 404 (Not Found).
+
+Requests must contain a query component with exactly one `resource` parameter set to the value of the URI of the WebFinger resource being queried. If the `resource` parameter is absent, malformed, or if there is more than one `resource` parameter, this will result in HTTP 400 (Bad Request). If the `resource` parameter does not correspond to a known WebFinger resource, this will result in HTTP 404 (Not Found).
+
+The query component of a request may contain one or more `rel` parameters. These are used to request a subset of the JRD for the WebFinger resource: only the links in the JRD with relation types matching the value of one of the `rel` parameters are returned. If no `rel` parameter is provided, all links in the JRD are returned.
+
+Each parameter value in the request is percent-encoded as described in section [4.1](https://www.rfc-editor.org/rfc/rfc7033.html#section-4.1) of RFC 7033.
+
+Any parameters of the query component other than `resource` and `rel` are ignored.
+
+A successful response is indicated by HTTP 200 (OK) and includes the HTTP headers `Access-Control-Allow-Origin: *` and `Content-Type: application/jrd+json`. The response body consists of the JRD, or a subset of the JRD if the request included `rel` parameters. 
 
 ## Building
 
