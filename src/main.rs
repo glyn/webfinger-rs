@@ -15,6 +15,8 @@ You should have received a copy of the GNU General Public License along with web
 If not, see <https://www.gnu.org/licenses/>.
 */
 
+mod jrdmap;
+
 use axum::{
     Router,
     extract::State,
@@ -42,17 +44,19 @@ struct Args {
 
 #[derive(Clone)]
 struct ServerState {
-    webfinger_jrd : String,
+    webfinger_jrdmap : jrdmap::JrdMap,
 }
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let args = Args::parse();
 
-    let webfinger_jrd = fs::read_to_string(args.jrd_map_path)
+    let webfinger_jrdmap = fs::read_to_string(args.jrd_map_path)
     .expect("Failed to read file");
 
-    let state = ServerState { webfinger_jrd : webfinger_jrd};
+    let jm = jrdmap::from_json(&webfinger_jrdmap);
+
+    let state = ServerState { webfinger_jrdmap : jm};
 
     let router = Router::new()
         .route("/", get(handler))
@@ -69,5 +73,5 @@ async fn handler(
 ) -> String {
     // use `state`...
 
-    state.webfinger_jrd.to_string()
+    jrdmap::to_json(&state.webfinger_jrdmap)
 }
