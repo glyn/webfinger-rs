@@ -1,6 +1,4 @@
-<div style="text-align: center;">
-    <img width=130 src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/WebFinger_Logo.svg/440px-WebFinger_Logo.svg.png">
-</div>
+<img width=130 src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/WebFinger_Logo.svg/440px-WebFinger_Logo.svg.png">
 
 # webfinger-rs
 
