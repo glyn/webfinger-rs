@@ -8,7 +8,7 @@
 
 The server can support multiple WebFinger resources, but is intended for use with a small, relatively static number of such resources, for example on a personal website. The server is not intended for sites with many users, since the mappings from WebFinger resources to JSON Resource Descriptor (JRD) are stored in a single file.
 
-WebFinger must be over HTTPS, but this server currently supports only HTTP, so this server must sit behind a HTTPS server. For example, this server could be used in conjunction with a reverse proxy, such as NGINX or freenginx, that terminates HTTPS traffic from clients and then passes requests to this server.
+WebFinger must be served over HTTPS, but this server currently supports only HTTP, so this server must sit behind a HTTPS server. For example, this server could be used in conjunction with a reverse proxy, such as NGINX or freenginx, that terminates HTTPS traffic from clients and then passes requests to this server.
 
 ## Requests and responses
 
