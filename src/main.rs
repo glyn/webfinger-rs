@@ -73,5 +73,11 @@ async fn handler(
 ) -> String {
     // use `state`...
 
-    jrdmap::to_json(&state.webfinger_jrdmap)
+    let uri = "acct:glyn@underlap.org".to_string();
+
+    let jrd = state.webfinger_jrdmap.get(&uri).expect("No JRD found for input URI");
+
+    let rel = "http://webfinger.net/rel/avatar".to_string();
+
+    jrdmap::to_json(&jrd.filter(rel))
 }

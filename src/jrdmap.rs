@@ -10,7 +10,9 @@ licensed under the GPL.
 
 use std::collections::hash_map::HashMap;
 use std::option::Option;
+use std::str::FromStr;
 
+use http::uri::Uri;
 use serde;
 use serde_json;
 
@@ -28,6 +30,7 @@ pub struct Jrd {
 
     // The "aliases" array is an array of zero or more URI strings that
     // identify the same entity as the "subject" URI.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aliases: Option<Vec<String>>,
 
 
@@ -35,14 +38,31 @@ pub struct Jrd {
     // names are URIs (referred to as "property identifiers") and whose
     // values are strings or null. Properties are used to convey additional
     // information about the subject of the JRD.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub properties: Option<HashMap<String, String>>,
 
 
     // The "links" array has any number of member objects, each of which
     // represents a link [4].
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub links: Option<Vec<ResourceLink>>,
 }
 
+impl Jrd {
+    pub fn filter(&self, rel: String) -> Jrd {
+        Jrd {
+            subject: self.subject.clone(),
+            aliases: self.aliases.clone(),
+            properties: self.properties.clone(),
+            links: self.links.clone().
+                map(|lks| lks.into_iter().
+                    filter(|lk| Uri::from_str(&lk.rel).unwrap() == Uri::from_str(&rel).unwrap()).
+                    collect()
+                )
+        }
+    }
+}
+    
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct ResourceLink {
     // Each of these link objects can have the following members:
@@ -63,11 +83,13 @@ pub struct ResourceLink {
 
     // The value of the "type" member is a string that indicates the media
     // type of the target resource (see RFC 6838).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_: Option<String>,
 
 
     // The value of the "href" member is a string that contains a URI
     // pointing to the target resource.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub href: Option<String>,
 
 
@@ -78,6 +100,7 @@ pub struct ResourceLink {
     // utilize the link relation, and, if used, a language identifier SHOULD
     // be duly used as the name.  If the language is unknown or unspecified,
     // then the name is "und".
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub titles: Option<HashMap<String, String>>,
 
 
@@ -86,11 +109,12 @@ pub struct ResourceLink {
     // "property identifiers") and whose values are strings or null.
     // Properties are used to convey additional information about the link
     // relation.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub properties: Option<HashMap<String, String>>,
 }
 
 
-pub fn to_json(resource : &JrdMap) -> String {
+pub fn to_json(resource : &Jrd) -> String {
     serde_json::to_string(&resource).unwrap()
 }
 
