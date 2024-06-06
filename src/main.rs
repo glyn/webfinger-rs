@@ -16,6 +16,7 @@ If not, see <https://www.gnu.org/licenses/>.
 */
 
 mod jrdmap;
+mod rel;
 
 use axum::{
     Router,

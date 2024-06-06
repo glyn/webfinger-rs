@@ -62,6 +62,7 @@ impl Jrd {
         }
     }
 }
+
     
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct ResourceLink {
