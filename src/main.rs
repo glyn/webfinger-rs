@@ -57,16 +57,20 @@ async fn main() -> io::Result<()> {
 
     let jm = jrdmap::from_json(&webfinger_jrdmap);
 
-    let state = ServerState { webfinger_jrdmap : jm};
-
-    let router = Router::new()
-        .route("/", get(handler))
-        .with_state(state);
+    let router = create_router(jm);
 
     let listener = TcpListener::bind(format!("127.0.0.1:{}", args.port)).await?;
     println!("Listening on http://{}", listener.local_addr()?);
 
     axum::serve(listener, router).await
+}
+
+fn create_router(jm: jrdmap::JrdMap) -> Router {
+    let state = ServerState { webfinger_jrdmap : jm};
+
+    Router::new()
+        .route("/", get(handler))
+        .with_state(state)
 }
 
 async fn handler(
