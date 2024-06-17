@@ -101,13 +101,15 @@ mod tests {
     use tower::{Service, ServiceExt}; // for `call`, `oneshot`, and `ready`
 
     #[tokio::test]
-    async fn hello_world() {
-        let jm = jrdmap::from_json(&"{}".to_string());
-        let app = create_router(jm);
+    async fn router_test() {
+        let jm = jrdmap::from_json(&"{\"acct:glyn@underlap.org\":{
+            \"subject\": \"acct:glyn@underlap.org\"
+        }}".to_string());
+        let router = create_router(jm);
 
         // `Router` implements `tower::Service<Request<Body>>` so we can
         // call it like any tower service, no need to run an HTTP server.
-        let response = app
+        let response = router
             .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
@@ -115,27 +117,29 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        assert_eq!(&body[..], b"Hello, World!");
+        assert_eq!(&body[..], b"{\"subject\":\"acct:glyn@underlap.org\"}");
     }
 
 
-    // #[tokio::test]
-    // async fn not_found() {
-    //     let jm = jrdmap::from_json("{}");
-    //     let app = app(jm);
+    #[tokio::test]
+    async fn not_found() {
+        let jm = jrdmap::from_json(&"{\"acct:other@underlap.org\":{
+            \"subject\": \"acct:other@underlap.org\"
+        }}".to_string());
+        let router = create_router(jm);
 
-    //     let response = app
-    //         .oneshot(
-    //             Request::builder()
-    //                 .uri("/does-not-exist")
-    //                 .body(Body::empty())
-    //                 .unwrap(),
-    //         )
-    //         .await
-    //         .unwrap();
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri("/does-not-exist") // FIXME: improve this
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
 
-    //     assert_eq!(response.status(), StatusCode::NOT_FOUND);
-    //     let body = response.into_body().collect().await.unwrap().to_bytes();
-    //     assert!(body.is_empty());
-    // }
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        assert!(body.is_empty());
+    }
 }
