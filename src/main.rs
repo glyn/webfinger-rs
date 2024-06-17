@@ -141,4 +141,36 @@ mod tests {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         assert!(body.is_empty());
     }
+
+    #[tokio::test]
+    async fn integration_test() {
+        let listener = TcpListener::bind("0.0.0.0:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+
+        tokio::spawn(async move {
+            let jm = jrdmap::from_json(&"{\"acct:glyn@underlap.org\":{
+                \"subject\": \"acct:glyn@underlap.org\"
+            }}".to_string());
+            axum::serve(listener, create_router(jm)).await.unwrap();
+        });
+
+        let client =
+            hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
+                .build_http();
+
+        let response = client
+            .request(
+                Request::builder()
+                    .uri(format!("http://{addr}"))
+                    .header("Host", "localhost")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        assert_eq!(&body[..], b"{\"subject\":\"acct:glyn@underlap.org\"}");
+    }
+
 }
