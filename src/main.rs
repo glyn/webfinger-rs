@@ -69,7 +69,7 @@ fn create_router(jm: jrdmap::JrdMap) -> Router {
         webfinger_jrdmap: jm,
     };
 
-    Router::new().route("/", get(handler)).with_state(state)
+    Router::new().route("/.well-known/webfinger", get(handler)).with_state(state)
 }
 
 async fn handler(State(state): State<ServerState>) -> String {
@@ -110,7 +110,7 @@ mod tests {
         // `Router` implements `tower::Service<Request<Body>>` so we can
         // call it like any tower service, no need to run an HTTP server.
         let response = router
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .oneshot(Request::builder().uri("/.well-known/webfinger").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
@@ -130,7 +130,7 @@ mod tests {
         let response = router
             .oneshot(
                 Request::builder()
-                    .uri("/does-not-exist") // FIXME: improve this
+                    .uri("/")
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -161,7 +161,7 @@ mod tests {
         let response = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{addr}"))
+                    .uri(format!("http://{addr}/.well-known/webfinger"))
                     .header("Host", "localhost")
                     .body(Body::empty())
                     .unwrap(),
