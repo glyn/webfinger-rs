@@ -19,14 +19,14 @@ mod jrdmap;
 mod rel;
 
 use axum::{
-    Router,
     extract::State,
     http::StatusCode,
     response::{Html, IntoResponse, Response},
-    routing::{get},
+    routing::get,
+    Router,
 };
-use std::io;
 use std::fs;
+use std::io;
 use tokio::net::TcpListener;
 
 use clap::Parser;
@@ -45,15 +45,14 @@ struct Args {
 
 #[derive(Clone)]
 struct ServerState {
-    webfinger_jrdmap : jrdmap::JrdMap,
+    webfinger_jrdmap: jrdmap::JrdMap,
 }
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let args = Args::parse();
 
-    let webfinger_jrdmap = fs::read_to_string(args.jrd_map_path)
-    .expect("Failed to read file");
+    let webfinger_jrdmap = fs::read_to_string(args.jrd_map_path).expect("Failed to read file");
 
     let jm = jrdmap::from_json(&webfinger_jrdmap);
 
@@ -66,21 +65,22 @@ async fn main() -> io::Result<()> {
 }
 
 fn create_router(jm: jrdmap::JrdMap) -> Router {
-    let state = ServerState { webfinger_jrdmap : jm};
+    let state = ServerState {
+        webfinger_jrdmap: jm,
+    };
 
-    Router::new()
-        .route("/", get(handler))
-        .with_state(state)
+    Router::new().route("/", get(handler)).with_state(state)
 }
 
-async fn handler(
-    State(state): State<ServerState>,
-) -> String {
+async fn handler(State(state): State<ServerState>) -> String {
     // use `state`...
 
     let uri = "acct:glyn@underlap.org".to_string();
 
-    let jrd = state.webfinger_jrdmap.get(&uri).expect("No JRD found for input URI");
+    let jrd = state
+        .webfinger_jrdmap
+        .get(&uri)
+        .expect("No JRD found for input URI");
 
     let rel = "http://webfinger.net/rel/avatar".to_string();
 
@@ -119,7 +119,6 @@ mod tests {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         assert_eq!(&body[..], b"{\"subject\":\"acct:glyn@underlap.org\"}");
     }
-
 
     #[tokio::test]
     async fn not_found() {
