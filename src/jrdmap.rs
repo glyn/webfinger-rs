@@ -84,7 +84,7 @@ pub struct ResourceLink {
 
     // The value of the "type" member is a string that indicates the media
     // type of the target resource (see RFC 6838).
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
     pub type_: Option<String>,
 
 

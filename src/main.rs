@@ -19,12 +19,13 @@ mod jrdmap;
 mod rel;
 
 use axum::{
-    extract::State,
+    extract::{State, Query},
     http::StatusCode,
     response::{Html, IntoResponse, Response},
     routing::get,
     Router,
 };
+use serde::Deserialize;
 use std::fs;
 use std::io;
 use tokio::net::TcpListener;
@@ -46,6 +47,14 @@ struct Args {
 #[derive(Clone)]
 struct ServerState {
     webfinger_jrdmap: jrdmap::JrdMap,
+}
+
+
+#[derive(Deserialize)]
+struct Params {
+    #[serde(default)]
+    resource: String,
+    rel: Option<String>,
 }
 
 #[tokio::main]
@@ -72,10 +81,13 @@ fn create_router(jm: jrdmap::JrdMap) -> Router {
     Router::new().route("/.well-known/webfinger", get(handler)).with_state(state)
 }
 
-async fn handler(State(state): State<ServerState>) -> String {
-    // use `state`...
+async fn handler(
+    State(state): State<ServerState>,
+    Query(params): Query<Params>
 
-    let uri = "acct:glyn@underlap.org".to_string();
+) -> String {
+    // TODO: decode resource query value
+    let uri = params.resource;
 
     let jrd = state
         .webfinger_jrdmap
@@ -96,28 +108,38 @@ mod tests {
         http::{self, Request, StatusCode},
     };
     use http_body_util::BodyExt; // for `collect`
+    use pretty_assertions::{assert_eq, assert_ne};
     use serde_json::{json, Value};
+    use std::str;
     use tokio::net::TcpListener;
     use tower::{Service, ServiceExt}; // for `call`, `oneshot`, and `ready`
 
     #[tokio::test]
     async fn router_test() {
         let jm = jrdmap::from_json(&"{\"acct:glyn@underlap.org\":{
-            \"subject\": \"acct:glyn@underlap.org\"
+            \"subject\": \"acct:glyn@underlap.org\",
+            \"links\": [
+          {
+            \"rel\": \"http://webfinger.net/rel/avatar\",
+            \"type\": \"image/jpeg\",
+            \"href\": \"https://underlap.org/data/glyn-avatar.jpeg\"
+          }
+        ]
         }}".to_string());
         let router = create_router(jm);
 
-        // `Router` implements `tower::Service<Request<Body>>` so we can
-        // call it like any tower service, no need to run an HTTP server.
         let response = router
-            .oneshot(Request::builder().uri("/.well-known/webfinger").body(Body::empty()).unwrap())
+            //.oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct%3Aglyn%40underlap.org").body(Body::empty()).unwrap())
+            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct:glyn@underlap.org&rel=http://webfinger.net/rel/avatar").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        assert_eq!(&body[..], b"{\"subject\":\"acct:glyn@underlap.org\"}");
+        let actual = str::from_utf8(&body[..]).unwrap();
+        let expected = str::from_utf8(b"{\"subject\":\"acct:glyn@underlap.org\",\"links\":[{\"rel\":\"http://webfinger.net/rel/avatar\",\"type\":\"image/jpeg\",\"href\":\"https://underlap.org/data/glyn-avatar.jpeg\"}]}").unwrap();
+        assert_eq!(actual, expected);
     }
 
     #[tokio::test]
@@ -161,7 +183,7 @@ mod tests {
         let response = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{addr}/.well-known/webfinger"))
+                    .uri(format!("http://{addr}/.well-known/webfinger?resource=acct:glyn@underlap.org"))
                     .header("Host", "localhost")
                     .body(Body::empty())
                     .unwrap(),
