@@ -94,9 +94,11 @@ async fn handler(
         .get(&uri)
         .expect("No JRD found for input URI");
 
-    let rel = "http://webfinger.net/rel/avatar".to_string();
-
-    jrdmap::to_json(&jrd.filter(rel))
+    if let Some(rel) = params.rel {
+        jrdmap::to_json(&jrd.filter(rel))
+    } else {
+        jrdmap::to_json(&jrd)
+    }
 }
 
 #[cfg(test)]
