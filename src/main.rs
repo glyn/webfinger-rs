@@ -108,6 +108,8 @@ mod tests {
     };
     use http_body_util::BodyExt; // for `collect`
     use pretty_assertions::{assert_eq, assert_ne};
+    use serde::Serialize;
+    use serde_json::ser::CompactFormatter;
     use serde_json::{json, Value};
     use std::str;
     use tokio::net::TcpListener;
@@ -142,8 +144,18 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        let actual = str::from_utf8(&body[..]).unwrap();
-        let expected = r#"{"subject":"acct:glyn@underlap.org","links":[{"rel":"http://webfinger.net/rel/avatar","type":"image/jpeg","href":"https://underlap.org/data/glyn-avatar.jpeg"}]}"#;
+        let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
+        let expected = json!(
+        {
+            "subject":"acct:glyn@underlap.org",
+            "links": [
+                {
+                    "rel":"http://webfinger.net/rel/avatar",
+                    "type":"image/jpeg",
+                    "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                }
+            ]
+        });
         assert_eq!(actual, expected);
     }
 
@@ -206,7 +218,8 @@ mod tests {
             .unwrap();
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        let actual = str::from_utf8(&body[..]).unwrap();
-        assert_eq!(actual, r#"{"subject":"acct:glyn@underlap.org"}"#);
+        let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
+        let expected = json!({"subject":"acct:glyn@underlap.org"});
+        assert_eq!(actual, expected);
     }
 }
