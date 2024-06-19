@@ -19,7 +19,7 @@ mod jrdmap;
 mod rel;
 
 use axum::{
-    extract::{State, Query},
+    extract::{Query, State},
     http::StatusCode,
     response::{Html, IntoResponse, Response},
     routing::get,
@@ -49,7 +49,6 @@ struct ServerState {
     webfinger_jrdmap: jrdmap::JrdMap,
 }
 
-
 #[derive(Deserialize)]
 struct Params {
     #[serde(default)]
@@ -78,14 +77,12 @@ fn create_router(jm: jrdmap::JrdMap) -> Router {
         webfinger_jrdmap: jm,
     };
 
-    Router::new().route("/.well-known/webfinger", get(handler)).with_state(state)
+    Router::new()
+        .route("/.well-known/webfinger", get(handler))
+        .with_state(state)
 }
 
-async fn handler(
-    State(state): State<ServerState>,
-    Query(params): Query<Params>
-
-) -> String {
+async fn handler(State(state): State<ServerState>, Query(params): Query<Params>) -> String {
     // TODO: decode resource query value
     let uri = params.resource;
 
@@ -118,16 +115,22 @@ mod tests {
 
     #[tokio::test]
     async fn router_test() {
-        let jm = jrdmap::from_json(&"{\"acct:glyn@underlap.org\":{
-            \"subject\": \"acct:glyn@underlap.org\",
-            \"links\": [
-          {
-            \"rel\": \"http://webfinger.net/rel/avatar\",
-            \"type\": \"image/jpeg\",
-            \"href\": \"https://underlap.org/data/glyn-avatar.jpeg\"
-          }
-        ]
-        }}".to_string());
+        let jm = jrdmap::from_json(
+            &r#"
+            {
+                "acct:glyn@underlap.org":{
+                    "subject": "acct:glyn@underlap.org",
+                    "links": [
+                        {
+                            "rel": "http://webfinger.net/rel/avatar",
+                            "type": "image/jpeg",
+                            "href": "https://underlap.org/data/glyn-avatar.jpeg"
+                        }
+                    ]
+                }
+            }"#
+            .to_string(),
+        );
         let router = create_router(jm);
 
         let response = router
@@ -140,24 +143,25 @@ mod tests {
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual = str::from_utf8(&body[..]).unwrap();
-        let expected = str::from_utf8(b"{\"subject\":\"acct:glyn@underlap.org\",\"links\":[{\"rel\":\"http://webfinger.net/rel/avatar\",\"type\":\"image/jpeg\",\"href\":\"https://underlap.org/data/glyn-avatar.jpeg\"}]}").unwrap();
+        let expected = r#"{"subject":"acct:glyn@underlap.org","links":[{"rel":"http://webfinger.net/rel/avatar","type":"image/jpeg","href":"https://underlap.org/data/glyn-avatar.jpeg"}]}"#;
         assert_eq!(actual, expected);
     }
 
     #[tokio::test]
     async fn not_found() {
-        let jm = jrdmap::from_json(&"{\"acct:other@underlap.org\":{
-            \"subject\": \"acct:other@underlap.org\"
-        }}".to_string());
+        let jm = jrdmap::from_json(
+            &r#"
+            {
+                "acct:other@underlap.org":{
+                    "subject": "acct:other@underlap.org"
+                }
+            }"#
+            .to_string(),
+        );
         let router = create_router(jm);
 
         let response = router
-            .oneshot(
-                Request::builder()
-                    .uri("/")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
@@ -172,9 +176,15 @@ mod tests {
         let addr = listener.local_addr().unwrap();
 
         tokio::spawn(async move {
-            let jm = jrdmap::from_json(&"{\"acct:glyn@underlap.org\":{
-                \"subject\": \"acct:glyn@underlap.org\"
-            }}".to_string());
+            let jm = jrdmap::from_json(
+                &r#"
+                {
+                    "acct:glyn@underlap.org":{
+                        "subject": "acct:glyn@underlap.org"
+                    }
+                }"#
+                .to_string(),
+            );
             axum::serve(listener, create_router(jm)).await.unwrap();
         });
 
@@ -185,7 +195,9 @@ mod tests {
         let response = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{addr}/.well-known/webfinger?resource=acct:glyn@underlap.org"))
+                    .uri(format!(
+                        "http://{addr}/.well-known/webfinger?resource=acct:glyn@underlap.org"
+                    ))
                     .header("Host", "localhost")
                     .body(Body::empty())
                     .unwrap(),
@@ -194,7 +206,7 @@ mod tests {
             .unwrap();
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        assert_eq!(&body[..], b"{\"subject\":\"acct:glyn@underlap.org\"}");
+        let actual = str::from_utf8(&body[..]).unwrap();
+        assert_eq!(actual, r#"{"subject":"acct:glyn@underlap.org"}"#);
     }
-
 }
