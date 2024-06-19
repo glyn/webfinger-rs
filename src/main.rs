@@ -106,14 +106,12 @@ mod tests {
         extract::connect_info::MockConnectInfo,
         http::{self, Request, StatusCode},
     };
-    use http_body_util::BodyExt; // for `collect`
-    use pretty_assertions::{assert_eq, assert_ne};
-    use serde::Serialize;
-    use serde_json::ser::CompactFormatter;
+    use http_body_util::BodyExt;
+    use pretty_assertions::assert_eq;
     use serde_json::{json, Value};
     use std::str;
     use tokio::net::TcpListener;
-    use tower::{Service, ServiceExt}; // for `call`, `oneshot`, and `ready`
+    use tower::ServiceExt;
 
     #[tokio::test]
     async fn router_test() {
