@@ -19,9 +19,10 @@ mod jrdmap;
 mod rel;
 
 use axum::{
+    body::Body,
     extract::{Query, State},
     http::StatusCode,
-    response::{Html, IntoResponse, Response},
+    response::Response,
     routing::get,
     Router,
 };
@@ -82,20 +83,29 @@ fn create_router(jm: jrdmap::JrdMap) -> Router {
         .with_state(state)
 }
 
-async fn handler(State(state): State<ServerState>, Query(params): Query<Params>) -> String {
-    // TODO: decode resource query value
+async fn handler(State(state): State<ServerState>, Query(params): Query<Params>) -> Response {
     let uri = params.resource;
 
-    let jrd = state
-        .webfinger_jrdmap
-        .get(&uri)
-        .expect("No JRD found for input URI");
-
-    if let Some(rel) = params.rel {
-        jrdmap::to_json(&jrd.filter(rel))
+    if let Some(jrd) = state.webfinger_jrdmap.get(&uri) {
+        let body = if let Some(rel) = params.rel {
+            jrdmap::to_json(&jrd.filter(rel))
+        } else {
+            jrdmap::to_json(&jrd)
+        };
+        
+        Response::builder()
+        .status(StatusCode::OK)
+        .body(Body::from(body))
+        .unwrap()
     } else {
-        jrdmap::to_json(&jrd)
+        // URI not found
+        Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .body(Body::from(""))
+        .unwrap()
     }
+
+    // FIXME: support content types
 }
 
 #[cfg(test)]
@@ -103,8 +113,7 @@ mod tests {
     use super::*;
     use axum::{
         body::Body,
-        extract::connect_info::MockConnectInfo,
-        http::{self, Request, StatusCode},
+        http::{Request, StatusCode},
     };
     use http_body_util::BodyExt;
     use pretty_assertions::assert_eq;
@@ -115,6 +124,7 @@ mod tests {
 
     #[tokio::test]
     async fn router_test() {
+        // FIXME: change to example.com URIs
         let jm = jrdmap::from_json(
             &r#"
             {
@@ -134,8 +144,50 @@ mod tests {
         let router = create_router(jm);
 
         let response = router
-            //.oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct%3Aglyn%40underlap.org").body(Body::empty()).unwrap())
             .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct:glyn@underlap.org&rel=http://webfinger.net/rel/avatar").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
+        let expected = json!(
+        {
+            "subject":"acct:glyn@underlap.org",
+            "links": [
+                {
+                    "rel":"http://webfinger.net/rel/avatar",
+                    "type":"image/jpeg",
+                    "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                }
+            ]
+        });
+        assert_eq!(actual, expected);
+    }
+
+    #[tokio::test]
+    async fn router_test_with_encoded_query() {
+        let jm = jrdmap::from_json(
+            &r#"
+            {
+                "acct:glyn@underlap.org":{
+                    "subject": "acct:glyn@underlap.org",
+                    "links": [
+                        {
+                            "rel": "http://webfinger.net/rel/avatar",
+                            "type": "image/jpeg",
+                            "href": "https://underlap.org/data/glyn-avatar.jpeg"
+                        }
+                    ]
+                }
+            }"#
+            .to_string(),
+        );
+        let router = create_router(jm);
+
+        let response = router
+            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct%3Aglyn%40underlap.org&rel=http%3a//webfinger.net/rel/avatar").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
@@ -171,7 +223,12 @@ mod tests {
         let router = create_router(jm);
 
         let response = router
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/.well-known/webfinger?resource=acct:glyn@underlap.org")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
 
