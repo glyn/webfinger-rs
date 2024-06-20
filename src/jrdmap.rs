@@ -22,17 +22,14 @@ pub type JrdMap = HashMap<String, Jrd>;
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct Jrd {
-
     // The value of the "subject" member is a URI that identifies the entity
     // that the JRD describes.
     pub subject: String,
-
 
     // The "aliases" array is an array of zero or more URI strings that
     // identify the same entity as the "subject" URI.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub aliases: Option<Vec<String>>,
-
 
     // The "properties" object comprises zero or more name/value pairs whose
     // names are URIs (referred to as "property identifiers") and whose
@@ -40,7 +37,6 @@ pub struct Jrd {
     // information about the subject of the JRD.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub properties: Option<HashMap<String, String>>,
-
 
     // The "links" array has any number of member objects, each of which
     // represents a link [4].
@@ -54,16 +50,16 @@ impl Jrd {
             subject: self.subject.clone(),
             aliases: self.aliases.clone(),
             properties: self.properties.clone(),
-            links: self.links.clone().
-                map(|lks| lks.into_iter().
+            links: self.links.clone().map(|lks| {
+                lks.into_iter().
+                // FIXME: following panics in real use
                     filter(|lk| Uri::from_str(&lk.rel).unwrap() == Uri::from_str(&rel).unwrap()).
                     collect()
-                )
+            }),
         }
     }
 }
 
-    
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct ResourceLink {
     // Each of these link objects can have the following members:
@@ -81,18 +77,15 @@ pub struct ResourceLink {
     // The "rel" member MUST be present in the link relation object.
     pub rel: String,
 
-
     // The value of the "type" member is a string that indicates the media
     // type of the target resource (see RFC 6838).
     #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
     pub type_: Option<String>,
 
-
     // The value of the "href" member is a string that contains a URI
     // pointing to the target resource.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub href: Option<String>,
-
 
     // The "titles" object comprises zero or more name/value pairs whose
     // names are a language tag [11] or the string "und".  The string is
@@ -104,7 +97,6 @@ pub struct ResourceLink {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub titles: Option<HashMap<String, String>>,
 
-
     // The "properties" object within the link relation object comprises
     // zero or more name/value pairs whose names are URIs (referred to as
     // "property identifiers") and whose values are strings or null.
@@ -114,12 +106,10 @@ pub struct ResourceLink {
     pub properties: Option<HashMap<String, String>>,
 }
 
-
-pub fn to_json(resource : &Jrd) -> String {
+pub fn to_json(resource: &Jrd) -> String {
     serde_json::to_string(&resource).unwrap()
 }
 
-
-pub fn from_json(s : &String) -> JrdMap {
+pub fn from_json(s: &String) -> JrdMap {
     serde_json::from_str(s).unwrap()
 }
