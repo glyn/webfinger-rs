@@ -45,6 +45,7 @@ pub struct Jrd {
 }
 
 impl Jrd {
+    // FIXME: allow multiple rel values to be specified
     pub fn filter(&self, rel: String) -> Jrd {
         Jrd {
             subject: self.subject.clone(),

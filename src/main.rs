@@ -240,6 +240,34 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn invalid_rel() {
+        let jm = jrdmap::from_json(
+            &r#"
+            {
+                "acct:other@underlap.org":{
+                    "subject": "acct:other@underlap.org"
+                }
+            }"#
+            .to_string(),
+        );
+        let router = create_router(jm);
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri("/.well-known/webfinger?resource=acct:glyn@underlap.org&rel=")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        assert!(body.is_empty());
+    }
+
+    #[tokio::test]
     async fn integration_test() {
         let listener = TcpListener::bind("0.0.0.0:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
