@@ -754,6 +754,7 @@ dependencies = [
  "clap",
  "http",
  "http-body-util",
+ "hyper",
  "hyper-util",
  "pretty_assertions",
  "serde",

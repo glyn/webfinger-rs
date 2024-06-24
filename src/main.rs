@@ -26,6 +26,7 @@ use axum::{
     routing::get,
     Router,
 };
+use hyper::header::CONTENT_TYPE;
 use serde::Deserialize;
 use std::fs;
 use std::io;
@@ -92,9 +93,10 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
         } else {
             jrdmap::to_json(&jrd)
         };
-        
+
         Response::builder()
         .status(StatusCode::OK)
+        .header(CONTENT_TYPE, "application/jrd+json")
         .body(Body::from(body))
         .unwrap()
     } else {
@@ -104,8 +106,6 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
         .body(Body::from(""))
         .unwrap()
     }
-
-    // FIXME: support content types
 }
 
 #[cfg(test)]
@@ -149,6 +149,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers().get(CONTENT_TYPE).unwrap(),"application/jrd+json");
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
@@ -192,6 +193,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers().get(CONTENT_TYPE).unwrap(),"application/jrd+json");
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
@@ -271,6 +273,9 @@ mod tests {
             )
             .await
             .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers().get(CONTENT_TYPE).unwrap(),"application/jrd+json");
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
