@@ -47,6 +47,7 @@ pub struct Jrd {
 impl Jrd {
     // Filter the links to include only those with the specified rel values
     pub fn filter(&self, rel: Vec<String>) -> Jrd {
+        // FIXME: following panics in real use, e.g. with rel= (empty string)
         let rel_uris: Vec<Uri> = rel.iter().map(|r| Uri::from_str(&r).unwrap()).collect();
         Jrd {
             subject: self.subject.clone(),
@@ -54,7 +55,6 @@ impl Jrd {
             properties: self.properties.clone(),
             links: self.links.clone().map(|lks| {
                 lks.into_iter().
-                // FIXME: following panics in real use
                     filter(|lk| rel_uris.contains(&Uri::from_str(&lk.rel).unwrap())).
                     collect()
             }),
