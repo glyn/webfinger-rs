@@ -45,8 +45,9 @@ pub struct Jrd {
 }
 
 impl Jrd {
-    // FIXME: allow multiple rel values to be specified
-    pub fn filter(&self, rel: String) -> Jrd {
+    // Filter the links to include only those with the specified rel values
+    pub fn filter(&self, rel: Vec<String>) -> Jrd {
+        let rel_uris: Vec<Uri> = rel.iter().map(|r| Uri::from_str(&r).unwrap()).collect();
         Jrd {
             subject: self.subject.clone(),
             aliases: self.aliases.clone(),
@@ -54,7 +55,7 @@ impl Jrd {
             links: self.links.clone().map(|lks| {
                 lks.into_iter().
                 // FIXME: following panics in real use
-                    filter(|lk| Uri::from_str(&lk.rel).unwrap() == Uri::from_str(&rel).unwrap()).
+                    filter(|lk| rel_uris.contains(&Uri::from_str(&lk.rel).unwrap())).
                     collect()
             }),
         }

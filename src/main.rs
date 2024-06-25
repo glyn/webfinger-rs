@@ -20,12 +20,13 @@ mod rel;
 
 use axum::{
     body::Body,
-    extract::{Query, State},
+    extract::State,
     http::StatusCode,
     response::Response,
     routing::get,
     Router,
 };
+use axum_extra::extract::Query;
 use hyper::header::CONTENT_TYPE;
 use serde::Deserialize;
 use std::fs;
@@ -55,7 +56,9 @@ struct ServerState {
 struct Params {
     #[serde(default)]
     resource: String,
-    rel: Option<String>,
+
+    #[serde(default)]
+    rel: Vec<String>,
 }
 
 #[tokio::main]
@@ -88,10 +91,10 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
     let uri = params.resource;
 
     if let Some(jrd) = state.webfinger_jrdmap.get(&uri) {
-        let body = if let Some(rel) = params.rel {
-            jrdmap::to_json(&jrd.filter(rel))
-        } else {
+        let body = if params.rel.is_empty() {
             jrdmap::to_json(&jrd)
+        } else {
+            jrdmap::to_json(&jrd.filter(params.rel))
         };
 
         Response::builder()
