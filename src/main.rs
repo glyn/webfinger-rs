@@ -168,6 +168,63 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn router_test_with_multiple_rels_in_query() {
+        // FIXME: change to example.com URIs
+        let jm = jrdmap::from_json(
+            &r#"
+            {
+                "acct:glyn@underlap.org":{
+                    "subject": "acct:glyn@underlap.org",
+                    "links": [
+                        {
+                            "rel": "http://webfinger.net/rel/avatar",
+                            "type": "image/jpeg",
+                            "href": "https://underlap.org/data/glyn-avatar.jpeg"
+                        },
+                        {
+                            "rel": "me",
+                            "href": "acct:me@example.com"
+                        },
+                        {
+                            "rel": "author",
+                            "href": "acct:author@example.com"
+                        }
+                    ]
+                }
+            }"#
+            .to_string(),
+        );
+        let router = create_router(jm);
+
+        let response = router
+            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct:glyn@underlap.org&rel=http://webfinger.net/rel/avatar&rel=me").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers().get(CONTENT_TYPE).unwrap(),"application/jrd+json");
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
+        let expected = json!(
+        {
+            "subject":"acct:glyn@underlap.org",
+            "links": [
+                {
+                    "rel":"http://webfinger.net/rel/avatar",
+                    "type":"image/jpeg",
+                    "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                },
+                {
+                    "rel": "me",
+                    "href": "acct:me@example.com"
+                }
+            ]
+        });
+        assert_eq!(actual, expected);
+    }
+
+    #[tokio::test]
     async fn router_test_with_encoded_query() {
         let jm = jrdmap::from_json(
             &r#"
