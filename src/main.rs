@@ -19,12 +19,7 @@ mod jrdmap;
 mod rel;
 
 use axum::{
-    body::Body,
-    extract::State,
-    http::StatusCode,
-    response::Response,
-    routing::get,
-    Router,
+    body::Body, extract::State, http::StatusCode, response::Response, routing::get, Router,
 };
 use axum_extra::extract::Query;
 use hyper::header::CONTENT_TYPE;
@@ -55,7 +50,7 @@ struct ServerState {
 #[derive(Deserialize)]
 struct Params {
     #[serde(default)]
-    resource: String,
+    resource: Vec<String>,
 
     #[serde(default)]
     rel: Vec<String>,
@@ -90,24 +85,33 @@ fn create_router(jm: jrdmap::JrdMap) -> Router {
 async fn handler(State(state): State<ServerState>, Query(params): Query<Params>) -> Response {
     let uri = params.resource;
 
-    if let Some(jrd) = state.webfinger_jrdmap.get(&uri) {
-        let body = if params.rel.is_empty() {
-            jrdmap::to_json(&jrd)
-        } else {
-            jrdmap::to_json(&jrd.filter(params.rel))
-        };
-
+    // "resource" parameter must be specified exactly once
+    if uri.len() != 1 {
         Response::builder()
-        .status(StatusCode::OK)
-        .header(CONTENT_TYPE, "application/jrd+json")
-        .body(Body::from(body))
-        .unwrap()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::from(""))
+            .unwrap()
     } else {
-        // URI not found
-        Response::builder()
-        .status(StatusCode::NOT_FOUND)
-        .body(Body::from(""))
-        .unwrap()
+        let uri = uri.get(0).unwrap();
+        if let Some(jrd) = state.webfinger_jrdmap.get(uri) {
+            let body = if params.rel.is_empty() {
+                jrdmap::to_json(&jrd)
+            } else {
+                jrdmap::to_json(&jrd.filter(params.rel))
+            };
+
+            Response::builder()
+                .status(StatusCode::OK)
+                .header(CONTENT_TYPE, "application/jrd+json")
+                .body(Body::from(body))
+                .unwrap()
+        } else {
+            // URI not found
+            Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .body(Body::from(""))
+                .unwrap()
+        }
     }
 }
 
@@ -151,7 +155,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(response.headers().get(CONTENT_TYPE).unwrap(),"application/jrd+json");
+        assert_eq!(
+            response.headers().get(CONTENT_TYPE).unwrap(),
+            "application/jrd+json"
+        );
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
@@ -203,7 +210,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(response.headers().get(CONTENT_TYPE).unwrap(),"application/jrd+json");
+        assert_eq!(
+            response.headers().get(CONTENT_TYPE).unwrap(),
+            "application/jrd+json"
+        );
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
@@ -251,7 +261,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(response.headers().get(CONTENT_TYPE).unwrap(),"application/jrd+json");
+        assert_eq!(
+            response.headers().get(CONTENT_TYPE).unwrap(),
+            "application/jrd+json"
+        );
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
@@ -298,7 +311,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn no_resource() {
+    async fn missing_resource() {
         let jm = jrdmap::from_json(
             &r#"
             {
@@ -320,7 +333,35 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        assert!(body.is_empty());
+    }
+
+    #[tokio::test]
+    async fn duplicate_resource() {
+        let jm = jrdmap::from_json(
+            &r#"
+            {
+                "acct:other@example.com":{
+                    "subject": "acct:other@example.com"
+                }
+            }"#
+            .to_string(),
+        );
+        let router = create_router(jm);
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri("/.well-known/webfinger?resource=acct:other@example.com&resource=acct:other@example.com")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let body = response.into_body().collect().await.unwrap().to_bytes();
         assert!(body.is_empty());
     }
@@ -396,19 +437,22 @@ mod tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(response.headers().get(CONTENT_TYPE).unwrap(),"application/jrd+json");
+        assert_eq!(
+            response.headers().get(CONTENT_TYPE).unwrap(),
+            "application/jrd+json"
+        );
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
         let expected = json!({"subject":"acct:alice@example.com",
-                                        "links": [
-                                            {
-                                                "rel":"http://webfinger.net/rel/avatar",
-                                                "type":"image/jpeg",
-                                                "href":"https://example.com/data/alice-avatar.jpeg"
-                                            }
-                                        ]
-                                    });
+            "links": [
+                {
+                    "rel":"http://webfinger.net/rel/avatar",
+                    "type":"image/jpeg",
+                    "href":"https://example.com/data/alice-avatar.jpeg"
+                }
+            ]
+        });
         assert_eq!(actual, expected);
     }
 }
