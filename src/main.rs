@@ -22,6 +22,7 @@ use axum::{
     body::Body, extract::State, http::StatusCode, response::Response, routing::get, Router,
 };
 use axum_extra::extract::Query;
+use http::Uri;
 use hyper::header::CONTENT_TYPE;
 use serde::Deserialize;
 use std::fs;
@@ -93,7 +94,13 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
             .unwrap()
     } else {
         let uri = uri.get(0).unwrap();
-        if let Some(jrd) = state.webfinger_jrdmap.get(uri) {
+        if uri.parse::<Uri>().is_err() {
+            // Malformed "resource" parameter
+            Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(Body::from(""))
+                .unwrap()
+        } else if let Some(jrd) = state.webfinger_jrdmap.get(uri) {
             let body = if params.rel.is_empty() {
                 jrdmap::to_json(&jrd)
             } else {
@@ -355,6 +362,34 @@ mod tests {
             .oneshot(
                 Request::builder()
                     .uri("/.well-known/webfinger?resource=acct:other@example.com&resource=acct:other@example.com")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        assert!(body.is_empty());
+    }
+
+    #[tokio::test]
+    async fn malformed_resource() {
+        let jm = jrdmap::from_json(
+            &r#"
+            {
+                "acct:other@example.com":{
+                    "subject": "acct:other@example.com"
+                }
+            }"#
+            .to_string(),
+        );
+        let router = create_router(jm);
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri("/.well-known/webfinger?resource=other@example.com") // resource not a URI // FIXME: this appears to be a URI??
                     .body(Body::empty())
                     .unwrap(),
             )
