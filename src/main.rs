@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Glyn Normington
+Copyright 2024 alice Normington
 
 This file is part of webfinger-rs.
 
@@ -127,17 +127,16 @@ mod tests {
 
     #[tokio::test]
     async fn router_test() {
-        // FIXME: change to example.com URIs
         let jm = jrdmap::from_json(
             &r#"
             {
-                "acct:glyn@underlap.org":{
-                    "subject": "acct:glyn@underlap.org",
+                "acct:alice@example.com":{
+                    "subject": "acct:alice@example.com",
                     "links": [
                         {
                             "rel": "http://webfinger.net/rel/avatar",
                             "type": "image/jpeg",
-                            "href": "https://underlap.org/data/glyn-avatar.jpeg"
+                            "href": "https://example.com/data/alice-avatar.jpeg"
                         }
                     ]
                 }
@@ -147,7 +146,7 @@ mod tests {
         let router = create_router(jm);
 
         let response = router
-            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct:glyn@underlap.org&rel=http://webfinger.net/rel/avatar").body(Body::empty()).unwrap())
+            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct:alice@example.com&rel=http://webfinger.net/rel/avatar").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
@@ -158,12 +157,12 @@ mod tests {
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
         let expected = json!(
         {
-            "subject":"acct:glyn@underlap.org",
+            "subject":"acct:alice@example.com",
             "links": [
                 {
                     "rel":"http://webfinger.net/rel/avatar",
                     "type":"image/jpeg",
-                    "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                    "href":"https://example.com/data/alice-avatar.jpeg"
                 }
             ]
         });
@@ -172,17 +171,16 @@ mod tests {
 
     #[tokio::test]
     async fn router_test_with_multiple_rels_in_query() {
-        // FIXME: change to example.com URIs
         let jm = jrdmap::from_json(
             &r#"
             {
-                "acct:glyn@underlap.org":{
-                    "subject": "acct:glyn@underlap.org",
+                "acct:alice@example.com":{
+                    "subject": "acct:alice@example.com",
                     "links": [
                         {
                             "rel": "http://webfinger.net/rel/avatar",
                             "type": "image/jpeg",
-                            "href": "https://underlap.org/data/glyn-avatar.jpeg"
+                            "href": "https://example.com/data/alice-avatar.jpeg"
                         },
                         {
                             "rel": "me",
@@ -200,7 +198,7 @@ mod tests {
         let router = create_router(jm);
 
         let response = router
-            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct:glyn@underlap.org&rel=http://webfinger.net/rel/avatar&rel=me").body(Body::empty()).unwrap())
+            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct:alice@example.com&rel=http://webfinger.net/rel/avatar&rel=me").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
@@ -211,12 +209,12 @@ mod tests {
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
         let expected = json!(
         {
-            "subject":"acct:glyn@underlap.org",
+            "subject":"acct:alice@example.com",
             "links": [
                 {
                     "rel":"http://webfinger.net/rel/avatar",
                     "type":"image/jpeg",
-                    "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                    "href":"https://example.com/data/alice-avatar.jpeg"
                 },
                 {
                     "rel": "me",
@@ -232,13 +230,13 @@ mod tests {
         let jm = jrdmap::from_json(
             &r#"
             {
-                "acct:glyn@underlap.org":{
-                    "subject": "acct:glyn@underlap.org",
+                "acct:alice@example.com":{
+                    "subject": "acct:alice@example.com",
                     "links": [
                         {
                             "rel": "http://webfinger.net/rel/avatar",
                             "type": "image/jpeg",
-                            "href": "https://underlap.org/data/glyn-avatar.jpeg"
+                            "href": "https://example.com/data/alice-avatar.jpeg"
                         }
                     ]
                 }
@@ -248,7 +246,7 @@ mod tests {
         let router = create_router(jm);
 
         let response = router
-            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct%3Aglyn%40underlap.org&rel=http%3a//webfinger.net/rel/avatar").body(Body::empty()).unwrap())
+            .oneshot(Request::builder().uri("/.well-known/webfinger?resource=acct%3Aalice%40example.com&rel=http%3a//webfinger.net/rel/avatar").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
@@ -259,12 +257,12 @@ mod tests {
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
         let expected = json!(
         {
-            "subject":"acct:glyn@underlap.org",
+            "subject":"acct:alice@example.com",
             "links": [
                 {
                     "rel":"http://webfinger.net/rel/avatar",
                     "type":"image/jpeg",
-                    "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                    "href":"https://example.com/data/alice-avatar.jpeg"
                 }
             ]
         });
@@ -276,8 +274,8 @@ mod tests {
         let jm = jrdmap::from_json(
             &r#"
             {
-                "acct:other@underlap.org":{
-                    "subject": "acct:other@underlap.org"
+                "acct:other@example.com":{
+                    "subject": "acct:other@example.com"
                 }
             }"#
             .to_string(),
@@ -287,7 +285,7 @@ mod tests {
         let response = router
             .oneshot(
                 Request::builder()
-                    .uri("/.well-known/webfinger?resource=acct:glyn@underlap.org")
+                    .uri("/.well-known/webfinger?resource=acct:alice@example.com")
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -304,8 +302,8 @@ mod tests {
         let jm = jrdmap::from_json(
             &r#"
             {
-                "acct:other@underlap.org":{
-                    "subject": "acct:other@underlap.org"
+                "acct:other@example.com":{
+                    "subject": "acct:other@example.com"
                 }
             }"#
             .to_string(),
@@ -315,7 +313,7 @@ mod tests {
         let response = router
             .oneshot(
                 Request::builder()
-                    .uri("/.well-known/webfinger?resource=acct:glyn@underlap.org&rel=")
+                    .uri("/.well-known/webfinger?resource=acct:alice@example.com&rel=")
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -336,13 +334,13 @@ mod tests {
             let jm = jrdmap::from_json(
                 &r#"
                 {
-                    "acct:glyn@underlap.org":{
-                        "subject": "acct:glyn@underlap.org",
+                    "acct:alice@example.com":{
+                        "subject": "acct:alice@example.com",
                         "links": [
                             {
                                 "rel":"http://webfinger.net/rel/avatar",
                                 "type":"image/jpeg",
-                                "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                                "href":"https://example.com/data/alice-avatar.jpeg"
                             }
                         ]
                     }
@@ -360,7 +358,7 @@ mod tests {
             .request(
                 Request::builder()
                     .uri(format!(
-                        "http://{addr}/.well-known/webfinger?resource=acct:glyn@underlap.org"
+                        "http://{addr}/.well-known/webfinger?resource=acct:alice@example.com"
                     ))
                     .header("Host", "localhost")
                     .body(Body::empty())
@@ -374,12 +372,12 @@ mod tests {
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
-        let expected = json!({"subject":"acct:glyn@underlap.org",
+        let expected = json!({"subject":"acct:alice@example.com",
                                         "links": [
                                             {
                                                 "rel":"http://webfinger.net/rel/avatar",
                                                 "type":"image/jpeg",
-                                                "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                                                "href":"https://example.com/data/alice-avatar.jpeg"
                                             }
                                         ]
                                     });
