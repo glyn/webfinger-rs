@@ -10,11 +10,11 @@ licensed under the GPL.
 
 use std::collections::hash_map::HashMap;
 use std::option::Option;
-use std::str::FromStr;
 
-use http::uri::Uri;
 use serde;
 use serde_json;
+
+use crate::rel::{Rel, make_rel};
 
 /* A JrdMap maps string URIs to the JSON Resource Descriptors associated
 with those URIs. */
@@ -47,15 +47,14 @@ pub struct Jrd {
 impl Jrd {
     // Filter the links to include only those with the specified rel values
     pub fn filter(&self, rel: Vec<String>) -> Jrd {
-        // FIXME: following panics in real use, e.g. with rel= (empty string)
-        let rel_uris: Vec<Uri> = rel.iter().map(|r| Uri::from_str(&r).unwrap()).collect();
+        let rels: Vec<Rel> = rel.iter().map(|r| make_rel(r.clone())).collect();
         Jrd {
             subject: self.subject.clone(),
             aliases: self.aliases.clone(),
             properties: self.properties.clone(),
             links: self.links.clone().map(|lks| {
                 lks.into_iter().
-                    filter(|lk| rel_uris.contains(&Uri::from_str(&lk.rel).unwrap())).
+                    filter(|lk| rels.contains(&lk.rel)).
                     collect()
             }),
         }
@@ -77,7 +76,9 @@ pub struct ResourceLink {
     // type.  The URI or registered relation type identifies the type of the
     // link relation.
     // The "rel" member MUST be present in the link relation object.
-    pub rel: String,
+    //#[serde(serialize_with = "serialize_rel", deserialize_with = "deserialize_rel")]
+    #[serde(flatten)]
+    pub rel: Rel,
 
     // The value of the "type" member is a string that indicates the media
     // type of the target resource (see RFC 6838).
