@@ -337,7 +337,14 @@ mod tests {
                 &r#"
                 {
                     "acct:glyn@underlap.org":{
-                        "subject": "acct:glyn@underlap.org"
+                        "subject": "acct:glyn@underlap.org",
+                        "links": [
+                            {
+                                "rel":"http://webfinger.net/rel/avatar",
+                                "type":"image/jpeg",
+                                "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                            }
+                        ]
                     }
                 }"#
                 .to_string(),
@@ -367,7 +374,15 @@ mod tests {
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let actual: Value = serde_json::from_str(str::from_utf8(&body[..]).unwrap()).unwrap();
-        let expected = json!({"subject":"acct:glyn@underlap.org"});
+        let expected = json!({"subject":"acct:glyn@underlap.org",
+                                        "links": [
+                                            {
+                                                "rel":"http://webfinger.net/rel/avatar",
+                                                "type":"image/jpeg",
+                                                "href":"https://underlap.org/data/glyn-avatar.jpeg"
+                                            }
+                                        ]
+                                    });
         assert_eq!(actual, expected);
     }
 }
