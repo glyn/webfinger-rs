@@ -298,6 +298,34 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn no_resource() {
+        let jm = jrdmap::from_json(
+            &r#"
+            {
+                "acct:other@example.com":{
+                    "subject": "acct:other@example.com"
+                }
+            }"#
+            .to_string(),
+        );
+        let router = create_router(jm);
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri("/.well-known/webfinger")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        assert!(body.is_empty());
+    }
+
+    #[tokio::test]
     async fn invalid_rel() {
         let jm = jrdmap::from_json(
             &r#"
