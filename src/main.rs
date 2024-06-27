@@ -90,7 +90,7 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
     if uri.len() != 1 {
         Response::builder()
             .status(StatusCode::BAD_REQUEST)
-            .body(Body::from(""))
+            .body(Body::from("Exactly one \"resource\" query parameter must be provided"))
             .unwrap()
     } else {
         let uri = uri.get(0).unwrap();
@@ -99,7 +99,7 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
             // Malformed "resource" parameter
             Response::builder()
                 .status(StatusCode::BAD_REQUEST)
-                .body(Body::from(""))
+                .body(Body::from("Malformed \"resource\" query parameter"))
                 .unwrap()
         } else if let Some(jrd) = state.webfinger_jrdmap.get(uri) {
             let body = if params.rel.is_empty() {
@@ -343,7 +343,7 @@ mod tests {
 
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        assert!(body.is_empty());
+        assert_eq!(body, "Exactly one \"resource\" query parameter must be provided");
     }
 
     #[tokio::test]
@@ -371,7 +371,7 @@ mod tests {
 
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        assert!(body.is_empty());
+        assert_eq!(body, "Exactly one \"resource\" query parameter must be provided");
     }
 
     #[tokio::test]
@@ -399,7 +399,7 @@ mod tests {
 
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        assert!(body.is_empty());
+        assert_eq!(body, "Malformed \"resource\" query parameter");
     }
 
     #[tokio::test]
