@@ -390,7 +390,7 @@ mod tests {
         let response = router
             .oneshot(
                 Request::builder()
-                    .uri("/.well-known/webfinger?resource=") // resource not a URI // FIXME: this appears to be a URI??
+                    .uri("/.well-known/webfinger?resource=alice@example.com") // resource not a URI according to RFC 3986
                     .body(Body::empty())
                     .unwrap(),
             )
