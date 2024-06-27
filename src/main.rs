@@ -94,7 +94,10 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
             .unwrap()
     } else {
         let uri = uri.get(0).unwrap();
-        if uri.parse::<Uri>().is_err() {
+        let parsed_uri = uri.parse::<Uri>();
+        if parsed_uri.is_err() || parsed_uri.unwrap().scheme().is_none() {
+            //panic!("{:?}", uri.parse::<Uri>().unwrap().scheme().unwrap());
+            //panic!("{:?}", uri.parse::<Uri>().unwrap().scheme());
             // Malformed "resource" parameter
             Response::builder()
                 .status(StatusCode::BAD_REQUEST)
@@ -462,7 +465,7 @@ mod tests {
             .request(
                 Request::builder()
                     .uri(format!(
-                        "http://{addr}/.well-known/webfinger?resource=acct:alice@example.com"
+                        "http://{addr}/.well-known/webfinger?resource=acct://alice@example.com"
                     ))
                     .header("Host", "localhost")
                     .body(Body::empty())
