@@ -22,7 +22,7 @@ use axum::{
     body::Body, extract::State, http::StatusCode, response::Response, routing::get, Router,
 };
 use axum_extra::extract::Query;
-use http::Uri;
+use fluent_uri::Uri;
 use hyper::header::CONTENT_TYPE;
 use serde::Deserialize;
 use std::fs;
@@ -94,7 +94,8 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
             .unwrap()
     } else {
         let uri = uri.get(0).unwrap();
-        if uri.parse::<Uri>().is_err() {
+        let parsed_uri = Uri::parse(uri);
+        if parsed_uri.is_err() || parsed_uri.unwrap().scheme().is_none() {
             // Malformed "resource" parameter
             Response::builder()
                 .status(StatusCode::BAD_REQUEST)
@@ -389,7 +390,7 @@ mod tests {
         let response = router
             .oneshot(
                 Request::builder()
-                    .uri("/.well-known/webfinger?resource=other@example.com") // resource not a URI // FIXME: this appears to be a URI??
+                    .uri("/.well-known/webfinger?resource=") // resource not a URI // FIXME: this appears to be a URI??
                     .body(Body::empty())
                     .unwrap(),
             )
