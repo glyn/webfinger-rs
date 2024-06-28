@@ -83,6 +83,11 @@ fn create_router(jm: jrdmap::JrdMap) -> Router {
         .with_state(state)
 }
 
+fn valid_uri(uri: &str) -> bool {
+    let uri_reference = Uri::parse(uri);
+    !uri_reference.is_err() && !uri_reference.unwrap().is_relative()
+}
+
 async fn handler(State(state): State<ServerState>, Query(params): Query<Params>) -> Response {
     let uri = params.resource;
 
@@ -94,8 +99,7 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
             .unwrap()
     } else {
         let uri = uri.get(0).unwrap();
-        let uri_reference = Uri::parse(uri);
-        if uri_reference.is_err() || uri_reference.unwrap().is_relative() {
+        if !valid_uri(&uri) {
             // Malformed "resource" parameter
             Response::builder()
                 .status(StatusCode::BAD_REQUEST)
@@ -490,5 +494,12 @@ mod tests {
             ]
         });
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_valid_uri() {
+        assert_eq!(false, valid_uri(""));
+        assert_eq!(false, valid_uri("alice@example.org"));
+        assert_eq!(true, valid_uri("acct:alice@example.org"));
     }
 }
