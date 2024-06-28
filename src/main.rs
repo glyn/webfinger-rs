@@ -94,8 +94,8 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
             .unwrap()
     } else {
         let uri = uri.get(0).unwrap();
-        let parsed_uri = Uri::parse(uri);
-        if parsed_uri.is_err() || parsed_uri.unwrap().scheme().is_none() {
+        let uri_reference = Uri::parse(uri);
+        if uri_reference.is_err() || uri_reference.unwrap().is_relative() {
             // Malformed "resource" parameter
             Response::builder()
                 .status(StatusCode::BAD_REQUEST)
