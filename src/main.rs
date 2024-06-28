@@ -23,7 +23,7 @@ use axum::{
 };
 use axum_extra::extract::Query;
 use fluent_uri::Uri;
-use hyper::header::CONTENT_TYPE;
+use hyper::header::{ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE};
 use serde::Deserialize;
 use std::fs;
 use std::io;
@@ -115,6 +115,7 @@ async fn handler(State(state): State<ServerState>, Query(params): Query<Params>)
             Response::builder()
                 .status(StatusCode::OK)
                 .header(CONTENT_TYPE, "application/jrd+json")
+                .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
                 .body(Body::from(body))
                 .unwrap()
         } else {
@@ -480,6 +481,10 @@ mod tests {
         assert_eq!(
             response.headers().get(CONTENT_TYPE).unwrap(),
             "application/jrd+json"
+        );
+        assert_eq!(
+            response.headers().get(ACCESS_CONTROL_ALLOW_ORIGIN).unwrap(),
+            "*"
         );
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
