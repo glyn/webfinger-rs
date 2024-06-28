@@ -59,3 +59,9 @@ We follow the conventions on [How to Write a Git Commit Message](https://chris.b
 ## Reporting bugs and creating issues
 
 When opening a new issue, try to roughly follow the commit message format conventions above.
+
+## Releasing
+
+Create a release using the Github web interface, ensuring that `version` is set
+to a suitable value in `Cargo.toml`. A Github action will automatically populate 
+the release with Linux and Windows binaries.
