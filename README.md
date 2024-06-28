@@ -22,16 +22,6 @@ Any parameters of the query component other than `resource` and `rel` are ignore
 
 A successful response is indicated by HTTP 200 (OK) and includes the HTTP headers `Access-Control-Allow-Origin: *` and `Content-Type: application/jrd+json`. The response body consists of the JRD, or a subset of the JRD if the request included `rel` parameters. 
 
-## Building
-
-This server is written in Rust. After [installing Rust](https://www.rust-lang.org/tools/install),
-build the server by issuing the `cargo` command in the root directory of a clone of this repository:
-~~~
-cargo build --release
-~~~
-
-This will build the `webfinger-rs` server executable in `target/release`.
-
 ## Usage
 
 Start the `webfinger-rs` server by executing the following command:
@@ -73,6 +63,40 @@ For example:
 ~~~
 
 In the example, each URI in the top-level map is an account equal to the subject, but the URIs need not be accounts and need not be equal to the subject. See the WebFinger [RFC 7033](https://www.rfc-editor.org/rfc/rfc7033.html) for more information about URIs and subjects and [RFC 7565](https://www.rfc-editor.org/rfc/rfc7565.html) for details of the 'acct' URI scheme.
+
+## Trying it out
+
+Run the server with port 8095 (or any other suitable port) and the example JRD map above:
+~~~
+webfinger-rs --port 8095 --jrd-map-path example.json
+~~~
+
+Then issue a WebFinger request using `curl` and see the response:
+~~~
+curl -i -H 'Accept: application/jrd+json' http://localhost:8095/.well-known/webfinger\?resource\=acct:alice@example.com
+HTTP/1.1 200 OK
+content-type: application/jrd+json
+access-control-allow-origin: *
+content-length: 194
+date: Fri, 28 Jun 2024 11:33:51 GMT
+
+{"subject":"acct:alice@example.com","aliases":["acct:someone@example.com"],"links":[{"rel":"http://webfinger.net/rel/avatar","type":"image/jpeg","href":"https://example.com/alice-avatar.jpeg"}]}
+~~~
+(the `-i` switch displays the response headers)
+
+## Building
+
+Binary builds for Linux and Windows are available in [published releases](https://github.com/glyn/webfinger-rs/releases). However, if you need to
+build for a different platform or with a pre-release level of code, please
+read on.
+
+This server is written in Rust. After [installing Rust](https://www.rust-lang.org/tools/install),
+build the server by issuing the `cargo` command in the root directory of a clone of this repository:
+~~~
+cargo build --release
+~~~
+
+This will build the `webfinger-rs` server executable in `target/release`.
 
 ## Development
 
