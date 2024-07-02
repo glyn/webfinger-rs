@@ -80,22 +80,22 @@ mod tests {
     }
 
     #[test]
-    fn restriction_test_equality_extension_uri_dot_normalization() {
+    fn test_equality_extension_uri_dot_normalization() {
         assert_eq!(make_rel("example://a/b".to_string()), make_rel("example://a/./b".to_string()));
     }
 
     #[test]
-    fn restriction_test_equality_extension_uri_dotdot_normalization() {
+    fn test_equality_extension_uri_dotdot_normalization() {
         assert_eq!(make_rel("example://a/b/../b".to_string()), make_rel("example://a/b".to_string()));
     }
 
     #[test]
-    fn restriction_test_equality_extension_uri_escape_normalization() {
+    fn test_equality_extension_uri_escape_normalization() {
         assert_eq!(make_rel("example://a/%7Bfoo%7D".to_string()), make_rel("example://a/%7bfoo%7d".to_string()));
     }
 
     #[test]
-    fn restriction_test_equality_extension_uri_optional_escape_normalization() {
+    fn test_equality_extension_uri_optional_escape_normalization() {
         assert_eq!(make_rel("example://a/%62".to_string()), make_rel("example://a/b".to_string()));
     }
 
