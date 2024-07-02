@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License along with web
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-use http::Uri;
+use fluent_uri::Uri;
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Rel{
@@ -29,10 +29,11 @@ pub fn make_rel(v: String) -> Rel {
 impl PartialEq for Rel {
     fn eq(&self, other: &Self) -> bool {
         // Detect extension relation types to be URIs.
-        if let Ok(self_uri) = self.rel.parse::<Uri>() {
-            if let Ok(other_uri) = other.rel.parse::<Uri>() {
-                // Compare extension relation types using their URIs.
-                return self_uri == other_uri;
+        if let Ok(self_uri_reference) = Uri::parse(self.rel.clone()) {
+            if let Ok(other_uri_reference) = Uri::parse(other.rel.clone()) {
+                if self_uri_reference.has_scheme() && other_uri_reference.has_scheme() {
+                    return self_uri_reference.normalize() == other_uri_reference.normalize()
+                }
             }
         }
 
