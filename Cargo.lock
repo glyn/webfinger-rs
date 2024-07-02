@@ -847,7 +847,6 @@ dependencies = [
  "axum-extra",
  "clap",
  "fluent-uri",
- "http",
  "http-body-util",
  "hyper",
  "hyper-util",
