@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License along with web
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-use http::Uri;
+use fluent_uri::Uri;
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Rel{
@@ -29,10 +29,12 @@ pub fn make_rel(v: String) -> Rel {
 impl PartialEq for Rel {
     fn eq(&self, other: &Self) -> bool {
         // Detect extension relation types to be URIs.
-        if let Ok(self_uri) = self.rel.parse::<Uri>() {
-            if let Ok(other_uri) = other.rel.parse::<Uri>() {
-                // Compare extension relation types using their URIs.
-                return self_uri == other_uri;
+        if let Ok(self_uri_reference) = Uri::parse(self.rel.clone()) {
+            if let Ok(other_uri_reference) = Uri::parse(other.rel.clone()) {
+                if self_uri_reference.has_scheme() && other_uri_reference.has_scheme() {
+                    eprintln!("comparing normalized URI references {} and {}", self_uri_reference.normalize(), other_uri_reference.normalize());
+                    return self_uri_reference.normalize() == other_uri_reference.normalize()
+                }
             }
         }
 
@@ -77,27 +79,24 @@ mod tests {
         assert_eq!(make_rel("example://a".to_string()), make_rel("eXAMPLE://a".to_string()));
     }
 
-    // The following tests track restrictions or limitations in http::Uri. If any of these start failing,
-    // they can be negated and moved above (and renamed).
-
     #[test]
     fn restriction_test_equality_extension_uri_dot_normalization() {
-        assert_ne!(make_rel("example://a/b".to_string()), make_rel("example://a/./b".to_string()));
+        assert_eq!(make_rel("example://a/b".to_string()), make_rel("example://a/./b".to_string()));
     }
 
     #[test]
     fn restriction_test_equality_extension_uri_dotdot_normalization() {
-        assert_ne!(make_rel("example://a/b/../b".to_string()), make_rel("example://a/b".to_string()));
+        assert_eq!(make_rel("example://a/b/../b".to_string()), make_rel("example://a/b".to_string()));
     }
 
     #[test]
     fn restriction_test_equality_extension_uri_escape_normalization() {
-        assert_ne!(make_rel("example://a/%7Bfoo%7D".to_string()), make_rel("example://a/%7bfoo%7d".to_string()));
+        assert_eq!(make_rel("example://a/%7Bfoo%7D".to_string()), make_rel("example://a/%7bfoo%7d".to_string()));
     }
 
     #[test]
     fn restriction_test_equality_extension_uri_optional_escape_normalization() {
-        assert_ne!(make_rel("example://a/%62".to_string()), make_rel("example://a/b".to_string()));
+        assert_eq!(make_rel("example://a/%62".to_string()), make_rel("example://a/b".to_string()));
     }
 
 }
