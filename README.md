@@ -64,6 +64,12 @@ For example:
 
 In the example, each URI in the top-level map is an account equal to the subject, but the URIs need not be accounts and need not be equal to the subject. See the WebFinger [RFC 7033](https://www.rfc-editor.org/rfc/rfc7033.html) for more information about URIs and subjects and [RFC 7565](https://www.rfc-editor.org/rfc/rfc7565.html) for details of the 'acct' URI scheme.
 
+Ideally, run the `webfinger-rs` server under a separate user (e.g. `webfinger`) created with no home directory, shell, or password. For example, you can create
+such a user in Debian as follows:
+~~~
+# adduser --system webfinger
+~~~
+
 ## Trying it out
 
 Run the server with port 8095 (or any other suitable port) and the example JRD map above:
