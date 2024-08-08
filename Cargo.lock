@@ -254,8 +254,8 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "fluent-uri"
-version = "0.2.0-alpha.7"
-source = "git+https://github.com/glyn/fluent-uri-rs.git?tag=v0.2-glyn#632d4a69ded147a61af096ad12a81eece9965eb6"
+version = "0.2.0"
+source = "git+https://github.com/glyn/fluent-uri-rs.git?tag=v0.2.1-glyn#b550a1e76cd4a53c3caca7ab902e045055252ed2"
 dependencies = [
  "borrow-or-share",
  "ref-cast",

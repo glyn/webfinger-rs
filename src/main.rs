@@ -83,9 +83,9 @@ fn create_router(jm: jrdmap::JrdMap) -> Router {
         .with_state(state)
 }
 
-fn valid_uri(uri: &str) -> bool {
-    let uri_reference = Uri::parse(uri);
-    !uri_reference.is_err() && uri_reference.unwrap().has_scheme()
+fn valid_uri(raw_uri: &str) -> bool {
+    let uri = Uri::parse(raw_uri);
+    !uri.is_err()
 }
 
 async fn handler(State(state): State<ServerState>, Query(params): Query<Params>) -> Response {

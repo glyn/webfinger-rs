@@ -29,12 +29,10 @@ pub fn make_rel(v: String) -> Rel {
 impl PartialEq for Rel {
     fn eq(&self, other: &Self) -> bool {
         // Detect extension relation types to be URIs.
-        if let Ok(self_uri_reference) = Uri::parse(self.rel.clone()) {
-            if let Ok(other_uri_reference) = Uri::parse(other.rel.clone()) {
-                if self_uri_reference.has_scheme() && other_uri_reference.has_scheme() {
-                    eprintln!("comparing normalized URI references {} and {}", self_uri_reference.normalize(), other_uri_reference.normalize());
-                    return self_uri_reference.normalize() == other_uri_reference.normalize()
-                }
+        if let Ok(self_uri) = Uri::parse(self.rel.clone()) {
+            if let Ok(other_uri) = Uri::parse(other.rel.clone()) {
+                eprintln!("comparing normalized URIs {} and {}", self_uri.normalize(), other_uri.normalize());
+                return self_uri.normalize() == other_uri.normalize()
             }
         }
 
